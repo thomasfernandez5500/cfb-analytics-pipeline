@@ -1,0 +1,40 @@
+name: Retrain Model
+
+on:
+  workflow_run:
+    workflows: ["dbt Run & Test"]
+    types: [completed]
+  workflow_dispatch: {}
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Train model
+        working-directory: ml
+        env:
+          WAREHOUSE: ${{ secrets.WAREHOUSE }}
+          BIGQUERY_PROJECT: ${{ secrets.BIGQUERY_PROJECT }}
+          BIGQUERY_DATASET: ${{ secrets.BIGQUERY_DATASET }}
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/service-account.json
+        run: |
+          echo "${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}" > /tmp/service-account.json
+          python train_model.py
+
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model
+          path: ml/model.joblib
+          # TODO: once the app is deployed, decide how it picks up the new
+          # model -- e.g. commit it back to the repo, or push to a model
+          # registry / cloud storage bucket that the app reads from.

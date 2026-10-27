@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: fct_games
+    description: One row per game with both teams' outcomes, used as the ML training table.
+    columns:
+      - name: game_id
+        tests:
+          - unique
+          - not_null
+      - name: home_team_won
+        tests:
+          - not_null

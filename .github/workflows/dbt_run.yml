@@ -1,0 +1,49 @@
+name: dbt Run & Test
+
+on:
+  workflow_run:
+    workflows: ["Weekly CFBD Data Pull"]
+    types: [completed]
+  workflow_dispatch: {}
+
+jobs:
+  dbt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write dbt profile
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<'EOF'
+          cfb_analytics:
+            target: bigquery
+            outputs:
+              bigquery:
+                type: bigquery
+                method: service-account
+                project: ${{ secrets.BIGQUERY_PROJECT }}
+                dataset: ${{ secrets.BIGQUERY_DATASET }}
+                keyfile: /tmp/service-account.json
+                threads: 4
+          EOF
+          echo "${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}" > /tmp/service-account.json
+
+      - name: dbt deps
+        working-directory: dbt_project
+        run: dbt deps
+
+      - name: dbt run
+        working-directory: dbt_project
+        run: dbt run
+
+      - name: dbt test
+        working-directory: dbt_project
+        run: dbt test

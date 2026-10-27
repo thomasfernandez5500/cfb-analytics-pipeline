@@ -1,0 +1,21 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: cfb_raw
+    description: Raw tables loaded directly by the ingestion/ scripts, one per CFBD endpoint.
+    tables:
+      - name: raw_games
+        description: One row per game (both teams' final scores, venue, dates).
+        loaded_at_field: start_date
+        freshness:
+          warn_after: {count: 10, period: day}
+          error_after: {count: 30, period: day}
+      - name: raw_team_game_stats
+        description: Per-team box score stats for each game.
+      - name: raw_recruiting_rankings
+        description: Team recruiting class rankings by year.
+      - name: raw_betting_lines
+        description: Vegas betting lines by game.
+      - name: raw_advanced_stats
+        description: Season-level advanced metrics (EPA, PPA, success rate, etc.).

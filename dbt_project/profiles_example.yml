@@ -1,0 +1,26 @@
+# Copy this to ~/.dbt/profiles.yml (NOT into the repo with real creds) and
+# fill in whichever target matches your WAREHOUSE choice. dbt reads this
+# separately from your .env file.
+
+cfb_analytics:
+  target: bigquery   # or "snowflake"
+  outputs:
+    bigquery:
+      type: bigquery
+      method: service-account
+      project: your-gcp-project-id
+      dataset: cfb_analytics
+      keyfile: /absolute/path/to/service-account.json
+      threads: 4
+      timeout_seconds: 300
+
+    snowflake:
+      type: snowflake
+      account: your_account_identifier
+      user: your_user
+      password: your_password
+      role: ACCOUNTADMIN
+      database: CFB_ANALYTICS
+      warehouse: COMPUTE_WH
+      schema: public
+      threads: 4

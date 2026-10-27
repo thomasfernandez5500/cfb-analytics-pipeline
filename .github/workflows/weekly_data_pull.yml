@@ -1,0 +1,33 @@
+name: Weekly CFBD Data Pull
+
+on:
+  schedule:
+    # Mondays 09:00 UTC during football season. Adjust as needed.
+    - cron: "0 9 * * 1"
+  workflow_dispatch: {}  # allows manual runs from the Actions tab
+
+jobs:
+  pull-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Pull latest week of games
+        working-directory: ingestion
+        env:
+          CFBD_API_KEY: ${{ secrets.CFBD_API_KEY }}
+          WAREHOUSE: ${{ secrets.WAREHOUSE }}
+          BIGQUERY_PROJECT: ${{ secrets.BIGQUERY_PROJECT }}
+          BIGQUERY_DATASET: ${{ secrets.BIGQUERY_DATASET }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/service-account.json
+        run: |
+          echo "${{ secrets.GCP_SERVICE_ACCOUNT_JSON }}" > "$GOOGLE_APPLICATION_CREDENTIALS"
+          # TODO: compute current year/week dynamically instead of hardcoding
+          python pull_games.py --year 2026 --week 9
